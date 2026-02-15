@@ -9,6 +9,7 @@ import { executeGrant, executeTransfer } from './blockchain.js';
 import { getTwitterClient } from './twitter.js';
 
 let supabase = null;
+const MONIBOT_PROFILE_ID = process.env.MONIBOT_PROFILE_ID;
 
 export function initSupabase() {
   const url = process.env.SUPABASE_URL;
@@ -89,21 +90,23 @@ export async function processCampaignQueue() {
             .from('profiles')
             .select('id, wallet_address, tempo_address, pay_tag')
             .eq('x_username', author.username)
-            .single();
+            .maybeSingle();
 
           if (!profile) {
             // Log skip
             await supabase.from('monibot_transactions').insert({
               tweet_id: reply.id,
               chain: 'tempo',
-              tx_hash: 'skip_no_profile',
-              sender_id: campaign.id,
-              receiver_id: campaign.id,
-              amount: campaign.grant_amount,
+              tx_hash: 'skip_no_profile_' + Date.now(),
+              sender_id: MONIBOT_PROFILE_ID,
+              receiver_id: MONIBOT_PROFILE_ID,
+              amount: 0,
               fee: 0,
               type: 'grant',
               status: 'skipped',
               error_reason: `No profile for @${author.username}`,
+              payer_pay_tag: 'MoniBot',
+              recipient_pay_tag: author.username,
             });
             continue;
           }
@@ -117,9 +120,10 @@ export async function processCampaignQueue() {
               tweet_id: reply.id,
               chain: 'tempo',
               tx_hash: result.txHash,
-              sender_id: campaign.id,
+              sender_id: MONIBOT_PROFILE_ID,
               receiver_id: profile.id,
               recipient_pay_tag: profile.pay_tag,
+              payer_pay_tag: 'MoniBot',
               amount: campaign.grant_amount,
               fee: parseFloat(result.fee),
               type: 'grant',
@@ -145,8 +149,10 @@ export async function processCampaignQueue() {
               tweet_id: reply.id,
               chain: 'tempo',
               tx_hash: 'failed_' + Date.now(),
-              sender_id: campaign.id,
+              sender_id: MONIBOT_PROFILE_ID,
               receiver_id: profile.id,
+              payer_pay_tag: 'MoniBot',
+              recipient_pay_tag: profile.pay_tag,
               amount: campaign.grant_amount,
               fee: 0,
               type: 'grant',
