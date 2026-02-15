@@ -3,14 +3,15 @@
  * 
  * Processes campaign grants and P2P commands on Tempo Testnet.
  * Uses native fee sponsorship (no EIP-712 relayer needed).
- * AlphaUSD (TIP-20, 18 decimals).
+ * AlphaUSD (TIP-20, 6 decimals).
  */
 
 import 'dotenv/config';
 import express from 'express';
-import { initSupabase, processCampaignQueue, processP2PQueue } from './database.js';
+import { initSupabase, processCampaignQueue, getSupabase } from './database.js';
 import { initTwitter } from './twitter.js';
 import { initBlockchain } from './blockchain.js';
+import { initP2P, pollP2PCommands } from './p2p.js';
 
 const PORT = process.env.PORT || 3002;
 const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL_MS || '30000', 10);
@@ -47,10 +48,11 @@ console.log('└─────────────────────�
 initSupabase();
 await initTwitter();
 await initBlockchain();
+initP2P(getSupabase());
 
 console.log(`\n📋 Configuration:`);
 console.log(`   Chain:            Tempo Testnet (42431)`);
-console.log(`   Token:            AlphaUSD (18 decimals)`);
+console.log(`   Token:            AlphaUSD (6 decimals)`);
 console.log(`   Poll Interval:    ${POLL_INTERVAL}ms`);
 console.log(`   Auto-Restart:     ${AUTO_RESTART_MS / 60000} minutes`);
 console.log('');
@@ -58,13 +60,15 @@ console.log('');
 async function pollAndProcess() {
   cycleCount++;
   lastPoll = new Date().toISOString();
+  console.log(`\n🔄 [Cycle ${cycleCount}] Polling at ${lastPoll}`);
 
   try {
     const campaignProcessed = await processCampaignQueue();
-    const p2pProcessed = await processP2PQueue();
+    const p2pProcessed = await pollP2PCommands();
     processedCount += campaignProcessed + p2pProcessed;
+    console.log(`   📊 Cycle ${cycleCount} done: campaigns=${campaignProcessed}, p2p=${p2pProcessed}, total=${processedCount}`);
   } catch (error) {
-    console.error('❌ Poll error:', error.message);
+    console.error('❌ Poll error:', error.message, error.stack);
     errorCount++;
   }
 }
