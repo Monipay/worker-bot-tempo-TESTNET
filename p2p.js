@@ -74,8 +74,12 @@ export async function pollP2PCommands() {
   try {
     console.log('💬 [Tempo] Polling for P2P commands...');
 
+    const searchQuery = '@monibot (send OR pay) (tempo OR alphausd) -is:retweet';
+    console.log(`   Search query: "${searchQuery}"`);
+    if (lastProcessedTweetId) console.log(`   since_id: ${lastProcessedTweetId}`);
+
     const searchParams = {
-      query: '@monibot (send OR pay) (tempo OR alphausd) -is:retweet',
+      query: searchQuery,
       max_results: 50,
       'tweet.fields': ['author_id', 'created_at', 'referenced_tweets'],
       'user.fields': ['username'],
@@ -87,6 +91,8 @@ export async function pollP2PCommands() {
     }
 
     const mentions = await twitter.v2.search(searchParams);
+
+    console.log(`   Twitter API response: ${mentions?.data?.data?.length || 0} tweets, meta: ${JSON.stringify(mentions?.data?.meta || {})}`);
 
     if (!mentions?.data?.data) {
       console.log('   No new Tempo P2P commands found.');
