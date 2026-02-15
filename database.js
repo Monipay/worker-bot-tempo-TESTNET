@@ -30,6 +30,7 @@ export async function processCampaignQueue() {
   let processed = 0;
 
   try {
+    console.log('📢 [Tempo] Checking active campaigns...');
     // Get active Tempo campaigns
     const { data: campaigns, error } = await supabase
       .from('campaigns')
@@ -39,7 +40,11 @@ export async function processCampaignQueue() {
       .not('tweet_id', 'is', null);
 
     if (error) throw error;
-    if (!campaigns?.length) return 0;
+    if (!campaigns?.length) {
+      console.log('   No active Tempo campaigns.');
+      return 0;
+    }
+    console.log(`   Found ${campaigns.length} active Tempo campaign(s).`);
 
     for (const campaign of campaigns) {
       try {
@@ -161,13 +166,8 @@ export async function processCampaignQueue() {
   return processed;
 }
 
-/**
- * Process P2P commands mentioning "on tempo"
- */
-export async function processP2PQueue() {
-  // P2P commands are handled by the main Twitter polling
-  // This is a placeholder for future Tempo-specific P2P logic
-  return 0;
+export function getSupabase() {
+  return supabase;
 }
 
 export { supabase };
