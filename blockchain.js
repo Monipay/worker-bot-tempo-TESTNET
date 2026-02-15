@@ -25,7 +25,7 @@ const FEE_BPS = 130; // 1.3%
 const MONIBOT_ROUTER = '0x78A824fDE7Ee3E69B2e2Ee52d1136EECD76749fc';
 const MONIPAY_ROUTER = '0xa39C3B7e02686cf7F226337525515c694318BDb9';
 
-// MoniBotRouter ABI (only functions we need)
+// MoniBotRouter ABI (functions + errors)
 const MONIBOT_ROUTER_ABI = [
   {
     name: 'executeGrant',
@@ -51,6 +51,17 @@ const MONIBOT_ROUTER_ABI = [
     ],
     outputs: [{ type: 'bool' }],
   },
+  // Custom errors for proper decoding
+  { name: 'NotExecutor', type: 'error', inputs: [] },
+  { name: 'InvalidAddress', type: 'error', inputs: [] },
+  { name: 'InvalidAmount', type: 'error', inputs: [] },
+  { name: 'InvalidNonce', type: 'error', inputs: [] },
+  { name: 'InsufficientAllowance', type: 'error', inputs: [] },
+  { name: 'InsufficientBalance', type: 'error', inputs: [] },
+  { name: 'TweetIdAlreadyUsed', type: 'error', inputs: [] },
+  { name: 'GrantAlreadyIssued', type: 'error', inputs: [] },
+  { name: 'FeeTooHigh', type: 'error', inputs: [] },
+  { name: 'InsufficientContractBalance', type: 'error', inputs: [] },
 ];
 
 let executorAccount = null;
